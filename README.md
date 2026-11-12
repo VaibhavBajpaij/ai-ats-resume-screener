@@ -86,4 +86,4 @@ npm run dev
 **Vaibhav Bajpai**
 Lead Software Engineer @ [CBDev Studio](https://cbdevstudio.in)
 GitHub: [@VaibhavBajpaij](https://github.com/VaibhavBajpaij)
-LinkedIn: [vaibhav-bajpai-baj](https://www.linkedin.com/in/vaibhav-bajpai-baj/)
+LinkedIn: [vaibhav-bajpai18](https://www.linkedin.com/in/vaibhav-bajpai18/)
