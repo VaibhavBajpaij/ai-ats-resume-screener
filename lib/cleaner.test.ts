@@ -119,5 +119,67 @@ describe("Post-LLM deterministic cleaner & hallucination guard", () => {
     expect(cleaned.summary).toBe("Analyst summary");
     expect(cleaned.education[0]?.normalizedLevel).toBe("masters");
   });
+
+  it("never overwrites OpenLCA/ecoinvent LCA projects or roles to UI/UX when generic prototype/redesign words appear", () => {
+    const parsed: ParsedDocumentResult = {
+      fileType: "docx",
+      status: "success",
+      parserUsed: "mammoth+ooxml",
+      normalizedText:
+        "Built a product prototype carbon model in OpenLCA using ecoinvent datasets and redesigned process flows.",
+      rawHtmlPreview: null,
+      charCount: 105,
+      wordCount: 16,
+      pageOrParagraphCount: 1,
+      hadTablesOrTextBoxes: false,
+      extractedHyperlinks: [],
+      diagnostics: [],
+    };
+
+    const rawLlm: RawLLMExtraction = {
+      candidateLabel: "openlca-test",
+      professionalSummary: null,
+      totalExperienceYearsReported: null,
+      lcaExperienceYearsReported: null,
+      uiuxExperienceYearsReported: null,
+      skills: [],
+      experiences: [
+        {
+          title: "Sustainability Researcher",
+          organization: "GreenLab",
+          startDateRaw: "Jan 2024",
+          endDateRaw: "Jan 2025",
+          durationMonthsReported: 12,
+          domain: "uiux_design",
+          responsibilities: [
+            "Modeled prototype battery recycling workflows in OpenLCA with ecoinvent",
+          ],
+          toolsUsed: ["OpenLCA", "ecoinvent"],
+          evidenceSnippet: "Modeled prototype battery recycling workflows in OpenLCA",
+        },
+      ],
+      projects: [
+        {
+          title: "Packaging Prototype Lifecycle Model",
+          domain: "lca",
+          description:
+            "Built prototype LCI dataset in OpenLCA and ecoinvent to redesign material recovery.",
+          toolsOrStandardsUsed: ["OpenLCA", "ecoinvent"],
+          evidenceSnippet: "Built prototype LCI dataset in OpenLCA",
+        },
+      ],
+      education: [],
+      certificationsAndStandards: [],
+      portfolioOrProfileUrls: [],
+      roleKeywords: [],
+      uncertaintyFlags: [],
+    };
+
+    const cleaned = cleanAndStandardizeExtraction(rawLlm, parsed);
+    expect(cleaned.experiences[0]?.domain).toBe("lca_sustainability");
+    expect(cleaned.projects[0]?.domain).toBe("lca");
+    expect(cleaned.lcaProjectCount).toBe(1);
+    expect(cleaned.uiuxProjectCount).toBe(0);
+  });
 });
 

@@ -1,7 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ParsedDocumentResult } from "@/lib/schemas";
 
-const generateContentMock = vi.fn();
+const { generateContentMock, googleGenAiCtorMock } = vi.hoisted(() => {
+  const generateContentMock = vi.fn();
+  const googleGenAiCtorMock = vi.fn().mockImplementation(() => ({
+    models: {
+      generateContent: generateContentMock,
+    },
+  }));
+  return { generateContentMock, googleGenAiCtorMock };
+});
 
 vi.mock("@google/genai", () => {
   return {
@@ -12,21 +20,18 @@ vi.mock("@google/genai", () => {
       ARRAY: "ARRAY",
       BOOLEAN: "BOOLEAN",
     },
-    GoogleGenAI: vi.fn().mockImplementation(() => ({
-      models: {
-        generateContent: generateContentMock,
-      },
-    })),
+    GoogleGenAI: googleGenAiCtorMock,
   };
 });
 
 import { extractResumeProfile } from "./extractor";
 
-describe("extractResumeProfile Gemini 1.5 Flash integration", () => {
+describe("extractResumeProfile Gemini 1.5 Flash v1beta integration", () => {
   const originalKey = process.env.GEMINI_API_KEY;
 
   afterEach(() => {
     generateContentMock.mockReset();
+    googleGenAiCtorMock.mockClear();
     if (originalKey === undefined) {
       delete process.env.GEMINI_API_KEY;
     } else {
@@ -34,7 +39,7 @@ describe("extractResumeProfile Gemini 1.5 Flash integration", () => {
     }
   });
 
-  it("calls GoogleGenAI with model 'gemini-1.5-flash' and returns llm_structured", async () => {
+  it("initializes GoogleGenAI with v1beta and calls model 'gemini-1.5-flash-latest'", async () => {
     process.env.GEMINI_API_KEY = "test-api-key";
 
     generateContentMock.mockResolvedValue({
@@ -77,8 +82,14 @@ describe("extractResumeProfile Gemini 1.5 Flash integration", () => {
 
     const result = await extractResumeProfile("test_resume.docx", parsed);
 
+    expect(googleGenAiCtorMock).toHaveBeenCalledWith({
+      apiKey: "test-api-key",
+      httpOptions: { apiVersion: "v1beta" },
+    });
     expect(generateContentMock).toHaveBeenCalledTimes(1);
-    expect(generateContentMock.mock.calls[0]?.[0]?.model).toBe("gemini-1.5-flash");
+    expect(generateContentMock.mock.calls[0]?.[0]?.model).toBe(
+      "gemini-1.5-flash-latest"
+    );
     expect(result.extractionMode).toBe("llm_structured");
     expect(result.diagnostics).toHaveLength(0);
     expect(result.rawExtraction.skills[0]?.rawName).toBe("GaBi");

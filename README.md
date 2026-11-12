@@ -54,7 +54,7 @@ Every candidate is evaluated deterministically out of **100 points** against two
 ## Tech Stack
 * **Framework:** Next.js 15 (App Router), React 19, TypeScript
 * **Document Parsing:** `pdf-parse`, `pdfjs-dist`, `mammoth`, `jszip`
-* **AI & Validation:** `@google/genai` (`gemini-1.5-flash` with deterministic `heuristic_fallback`), `zod`
+* **AI & Validation:** `@google/genai` (`gemini-1.5-flash-latest` via `v1beta` with deterministic `heuristic_fallback`), `zod`
 * **Styling & UI:** Tailwind CSS, `lucide-react`
 * **Testing:** Vitest (`16/16` unit & route tests covering parsers, interval math, hallucination stripping, and API guards)
 

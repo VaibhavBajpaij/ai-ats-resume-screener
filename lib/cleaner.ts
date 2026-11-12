@@ -162,6 +162,9 @@ export function mergeIntervalsAndCountMonths(
   );
 }
 
+const LCA_STRICT_REGEX =
+  /\b(openlca|ecoinvent|gabi|simapro|lca|life\s*cycle|lifecycle|lci|iso\s*14040|iso\s*14044|epd|environmental\s*product\s*declaration|ghg\s*accounting|carbon\s*footprint|sustainability\s*analyst|sustainability\s*consultant)\b/i;
+
 function inferDomainFromExperienceText(exp: RawExperienceEntry): DomainTag {
   const combined = [
     exp.title ?? "",
@@ -172,18 +175,36 @@ function inferDomainFromExperienceText(exp: RawExperienceEntry): DomainTag {
     .join(" ")
     .toLowerCase();
 
-  const hasLcaSignals =
-    /\b(lca|life\s*cycle\s*assessment|lifecycle\s*assessment|lci|life\s*cycle\s*inventory|gabi|simapro|openlca|iso\s*14040|iso\s*14044|epd|environmental\s*product\s*declaration|ghg\s*accounting|carbon\s*footprint|sustainability\s*analyst|sustainability\s*consultant)\b/i.test(
-      combined
-    );
+  // Guard clause: LCA software or core LCA keywords strictly win and cannot be overwritten by generic UI/UX terms
+  if (LCA_STRICT_REGEX.test(combined)) {
+    return "lca_sustainability";
+  }
+
   const hasUiuxSignals =
     /\b(ui\/ux|ux\/ui|ui\s*ux|ux\s*designer|ui\s*designer|product\s*designer|interaction\s*design|figma|wirefram|prototyp|usability\s*testing|user\s*research|design\s*system)\b/i.test(
       combined
     );
 
-  if (hasLcaSignals && !hasUiuxSignals) return "lca_sustainability";
-  if (hasUiuxSignals && !hasLcaSignals) return "uiux_design";
+  if (hasUiuxSignals) return "uiux_design";
   return exp.domain;
+}
+
+function resolveProjectDomain(
+  combinedProj: string,
+  currentDomain: RawProjectEntry["domain"]
+): RawProjectEntry["domain"] {
+  // Guard clause: projects referencing LCA software or LCA/life-cycle terminology strictly map to "lca"
+  if (LCA_STRICT_REGEX.test(combinedProj)) {
+    return "lca";
+  }
+  if (
+    /\b(ui\/ux|ux\/ui|figma|wirefram|prototyp|usability|user\s*research|redesign|app\s*design|website\s*design)\b/i.test(
+      combinedProj
+    )
+  ) {
+    return "uiux";
+  }
+  return currentDomain;
 }
 
 function isTokenGrounded(
@@ -526,26 +547,10 @@ export function cleanAndStandardizeExtraction(
     seenProjects.add(dedupKey);
 
     const combinedProj = `${title ?? ""} ${description} ${proj.toolsOrStandardsUsed.join(" ")}`.toLowerCase();
-    let domain = proj.domain;
-    if (
-      /\b(lca|life\s*cycle|lci|gabi|simapro|openlca|epd|iso\s*14040|iso\s*14044|carbon\s*footprint)\b/i.test(
-        combinedProj
-      ) &&
-      domain !== "lca"
-    ) {
-      domain = "lca";
+    const domain = resolveProjectDomain(combinedProj, proj.domain);
+    if (domain !== proj.domain) {
       auditLog.push(
-        `Reclassified project "${title ?? "Untitled"}" domain -> "lca".`
-      );
-    } else if (
-      /\b(ui\/ux|ux\/ui|figma|wirefram|prototyp|usability|user\s*research|redesign|app\s*design|website\s*design)\b/i.test(
-        combinedProj
-      ) &&
-      domain !== "uiux"
-    ) {
-      domain = "uiux";
-      auditLog.push(
-        `Reclassified project "${title ?? "Untitled"}" domain -> "uiux".`
+        `Reclassified project "${title ?? "Untitled"}" domain "${proj.domain}" -> "${domain}".`
       );
     }
 
