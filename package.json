@@ -1,0 +1,40 @@
+{
+  "name": "gfi-resume-ranker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "fetch-resumes": "tsx scripts/fetch-zoho-resumes.ts",
+    "ingest": "tsx scripts/ingest-resumes.ts"
+  },
+  "dependencies": {
+    "@google/genai": "^3.2.0",
+    "jszip": "^3.10.1",
+    "lucide-react": "^0.511.0",
+    "mammoth": "^1.9.1",
+    "next": "^15.5.12",
+    "pdf-parse": "1.1.1",
+    "pdfjs-dist": "^4.10.38",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.4",
+    "@types/node": "^22.14.0",
+    "@types/pdf-parse": "^1.1.4",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
+    "eslint": "^9.24.0",
+    "eslint-config-next": "^15.5.12",
+    "tailwindcss": "^4.1.4",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
+  }
+}

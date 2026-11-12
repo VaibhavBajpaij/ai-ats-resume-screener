@@ -1,0 +1,112 @@
+import type { JobProfile } from "./schemas";
+
+export const ZOHO_FOLDER_URL =
+  "https://workdrive.zohoexternal.in/folder/nyche10b5dccdb33743dfa46604e3aa2a2e2b";
+
+export const JOB_PROFILES: { jd1: JobProfile; jd2: JobProfile } = {
+  jd1: {
+    id: "jd1_lca",
+    title: "LifeCycle Assessment (LCA) Consultant",
+    shortTitle: "LCA Consultant (JD1)",
+    sourceUrl: "https://tally.so/r/9q5plp",
+    experienceRequirementLabel:
+      "2–3 yrs independent LCA (JD1) / 4–6 yrs target (Brief) — peak band 2–6 yrs",
+    targetMinYears: 2,
+    targetMaxYears: 6,
+    location: "Chennai, India (Onsite / Relocation + India Travel)",
+    mandatoryTools: ["GaBi", "SimaPro"],
+    preferredTools: ["OpenLCA", "Umberto", "ecoinvent"],
+    mandatoryStandardsOrMethods: ["ISO 14040", "ISO 14044"],
+    minRelevantProjects: 3,
+    desiredEducationDomains: [
+      "Environmental Engineering",
+      "Environmental Science",
+      "Sustainability",
+      "Chemical Engineering",
+      "Energy Systems",
+    ],
+    keywords: [
+      "Life Cycle Assessment",
+      "Life Cycle Inventory",
+      "LCI",
+      "GaBi",
+      "SimaPro",
+      "ISO 14040",
+      "ISO 14044",
+      "EPD",
+      "Carbon Footprint",
+      "GHG Accounting",
+      "Benchmarking",
+      "Data Validation",
+      "Logistics Data",
+    ],
+    summary:
+      "Dedicated LCA Consultant to collect/validate LCI datasets, build LCA models in GaBi or SimaPro following ISO 14040 & ISO 14044, deliver >=3 LCA projects, collaborate with CFTs on plant/energy/logistics data, and run public benchmarking. EPD & basic finance/accounting preferred.",
+    scoringWeights: {
+      "LCA Software (GaBi / SimaPro / Adjacent)": 18,
+      "LCI & LCA Core Methodology Skills": 17,
+      "Verified LCA Experience (2–6 yrs peak)": 25,
+      "LCA Project History (>=3 projects)": 20,
+      "ISO 14040 / 14044 & EPD Standards": 10,
+      "Environmental Degree & Preferred Fit": 10,
+    },
+  },
+  jd2: {
+    id: "jd2_uiux",
+    title: "Growth For Impact UI/UX Design Internship",
+    shortTitle: "UI/UX Design Intern (JD2)",
+    sourceUrl: "https://tally.so/r/0QovpQ",
+    experienceRequirementLabel: "0–1 year (Early career / Student / Transitioner)",
+    targetMinYears: 0,
+    targetMaxYears: 1.5,
+    location: "Fully Remote (Stipend 10,000–15,000/month)",
+    mandatoryTools: ["Figma"],
+    preferredTools: [
+      "Prototyping",
+      "Wireframing",
+      "Design Systems",
+      "Adobe XD",
+      "Sketch",
+      "Framer",
+      "Responsive UI",
+    ],
+    mandatoryStandardsOrMethods: [
+      "Human-Centered Design",
+      "User Research",
+      "Usability Testing",
+      "User Psychology",
+    ],
+    minRelevantProjects: 1,
+    desiredEducationDomains: [
+      "Design",
+      "HCI",
+      "Interaction Design",
+      "Visual Communication",
+      "Computer Science / Product",
+    ],
+    keywords: [
+      "UI/UX Design",
+      "Figma",
+      "Prototyping",
+      "Wireframing",
+      "User Research",
+      "User Psychology",
+      "Usability Testing",
+      "Design Systems",
+      "Visual Design",
+      "Design Critiques",
+      "Sustainability",
+      "Job Board UX",
+    ],
+    summary:
+      "First UX/UI Designer Intern at Growth For Impact (building LinkedIn for sustainability) to revamp the website and job board, conduct user research & psychology-driven UX, create high-fidelity Figma prototypes, and maintain a cohesive visual identity.",
+    scoringWeights: {
+      "Figma & Design/Prototyping Tools": 30,
+      "UX Principles, Research & User Psychology": 25,
+      "Portfolio Links & UI/UX Case Studies": 25,
+      "Experience Alignment (0–1.5 yrs Intern Band)": 10,
+      "Sustainability & Collaboration Fit": 10,
+    },
+  },
+};
+
