@@ -53,16 +53,54 @@ async function main() {
     throw new Error("No resume files found in public/resumes/. Run npm run fetch-resumes first.");
   }
 
+  const isUpgradeMode = process.argv.includes("--upgrade");
+  const outPath = path.join(dataDir, "processed-resumes.json");
+  const existingByFilename = new Map<string, CandidateRecord>();
+  if (isUpgradeMode) {
+    try {
+      const existingRaw = JSON.parse(await fs.readFile(outPath, "utf-8")) as ProcessedDataset;
+      for (const c of existingRaw.candidates) {
+        existingByFilename.set(c.source.filename, c);
+      }
+      console.log(`Upgrade mode enabled: loaded ${existingByFilename.size} existing record(s).`);
+    } catch {
+      console.warn("Upgrade mode: no existing processed-resumes.json found; running fresh.");
+    }
+  }
+
   console.log(
     `Ingesting ${files.length} resume(s) (Gemini key configured: ${Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY)})...`
   );
 
   const rawCandidates: CandidateRecord[] = [];
   let index = 0;
+  let upgradeCallCount = 0;
+
   for (const filename of files) {
     index++;
     const filePath = path.join(resumesDir, filename);
     const meta = manifestByFilename.get(filename);
+
+    const existing = existingByFilename.get(filename);
+    if (
+      isUpgradeMode &&
+      existing &&
+      (existing.parsing.extractionMode === "llm_structured" ||
+        existing.parsing.status === "failed")
+    ) {
+      rawCandidates.push(existing);
+      console.log(
+        `[CACHED] (${index}/${files.length}) ${filename} -> mode=${existing.parsing.extractionMode} | JD1=${existing.evaluation.jd1.totalScore} | JD2=${existing.evaluation.jd2.totalScore}`
+      );
+      continue;
+    }
+
+    // Alternate primary batch models so each stays < 5 RPM while preserving gemini-3.1-flash-lite for live UI uploads
+    const batchModels =
+      upgradeCallCount % 2 === 0
+        ? ["gemini-3.5-flash", "gemini-3.6-flash", "gemini-3.1-flash-lite"]
+        : ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite"];
+    upgradeCallCount++;
 
     console.log(`[START] Parsing ${filename} (${index}/${files.length})...`);
     try {
@@ -74,12 +112,23 @@ async function main() {
         zohoResourceId: meta?.id ?? null,
         zohoFileUrl: meta?.permalink ?? null,
         localDownloadUrl: `/resumes/${encodeURIComponent(filename)}`,
+        modelCandidates: isUpgradeMode ? batchModels : undefined,
       });
 
       rawCandidates.push(record);
       console.log(
-        `[SUCCESS] ${filename} -> ${record.evaluation.classification} | JD1=${record.evaluation.jd1.totalScore} | JD2=${record.evaluation.jd2.totalScore} | parse=${record.parsing.status} | chars=${record.parsing.charCount} | exp(LCA=${record.extracted.experience.lcaYears}y, UIUX=${record.extracted.experience.uiuxYears}y)`
+        `[SUCCESS] ${filename} -> ${record.evaluation.classification} | JD1=${record.evaluation.jd1.totalScore} | JD2=${record.evaluation.jd2.totalScore} | parse=${record.parsing.status} | mode=${record.parsing.extractionMode} | chars=${record.parsing.charCount} | exp(LCA=${record.extracted.experience.lcaYears}y, UIUX=${record.extracted.experience.uiuxYears}y)`
       );
+      const llmWarn = record.diagnostics.find(
+        (d) => d.stage === "llm_extraction" && d.severity === "warning"
+      );
+      if (llmWarn) {
+        console.warn(`  -> [${llmWarn.code}] ${llmWarn.message}`);
+      }
+      // Pace ~7s between alternating models (~4.3 RPM per model < 5 RPM Free Tier limit)
+      if (record.parsing.extractionMode === "llm_structured") {
+        await new Promise((r) => setTimeout(r, isUpgradeMode ? 7000 : 13000));
+      }
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
       console.error(`[ERROR] Unhandled failure on ${filename}: ${errMsg}`);
@@ -117,7 +166,6 @@ async function main() {
     candidates: rankedCandidates,
   });
 
-  const outPath = path.join(dataDir, "processed-resumes.json");
   await fs.writeFile(outPath, JSON.stringify(dataset, null, 2), "utf-8");
 
   console.log("\n=== Ingestion Summary ===");

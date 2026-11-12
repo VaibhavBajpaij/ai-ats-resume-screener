@@ -563,8 +563,8 @@ export function DashboardClient({ dataset }: { dataset: ProcessedDataset }) {
 
             {/* Filter & Sort Controls */}
             <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-6">
-                <div className="relative lg:col-span-2">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-12">
+                <div className="relative lg:col-span-4">
                   <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                   <input
                     type="text"
@@ -583,9 +583,9 @@ export function DashboardClient({ dataset }: { dataset: ProcessedDataset }) {
                     )
                   }
                   aria-label="Filter by classification"
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-800 focus:border-slate-400 focus:bg-white focus:outline-none"
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs font-medium text-slate-800 focus:border-slate-400 focus:bg-white focus:outline-none lg:col-span-2"
                 >
-                  <option value="all">All Classifications</option>
+                  <option value="all">All Categories</option>
                   <option value="lca_stronger">LCA Stronger</option>
                   <option value="uiux_stronger">UI/UX Stronger</option>
                   <option value="both">Both Roles</option>
@@ -596,39 +596,39 @@ export function DashboardClient({ dataset }: { dataset: ProcessedDataset }) {
                   value={minScore}
                   onChange={(e) => setMinScore(Number(e.target.value))}
                   aria-label="Filter by minimum score"
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-800 focus:border-slate-400 focus:bg-white focus:outline-none"
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs font-medium text-slate-800 focus:border-slate-400 focus:bg-white focus:outline-none lg:col-span-2"
                 >
-                  <option value={0}>Score: Any (0–100)</option>
-                  <option value={45}>Qualified (≥ 45 pts)</option>
-                  <option value={60}>Strong Match (≥ 60 pts)</option>
-                  <option value={75}>Top Tier (≥ 75 pts)</option>
+                  <option value={0}>Score: Any</option>
+                  <option value={45}>Score ≥ 45</option>
+                  <option value={60}>Score ≥ 60</option>
+                  <option value={75}>Score ≥ 75</option>
                 </select>
 
                 <select
                   value={expFilter}
                   onChange={(e) => setExpFilter(e.target.value)}
                   aria-label="Filter by relevant experience"
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-800 focus:border-slate-400 focus:bg-white focus:outline-none"
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs font-medium text-slate-800 focus:border-slate-400 focus:bg-white focus:outline-none lg:col-span-2"
                 >
-                  <option value="all">Relevant Exp: Any</option>
-                  <option value="lca_2_6">2–6 yrs (LCA Target)</option>
-                  <option value="intern_0_1_5">0–1.5 yrs (Intern Band)</option>
-                  <option value="has_exp">&gt; 0 yrs Relevant Exp</option>
-                  <option value="zero_exp">0 yrs / Unspecified</option>
+                  <option value="all">Exp: Any</option>
+                  <option value="lca_2_6">2–6 yrs (LCA)</option>
+                  <option value="intern_0_1_5">0–1.5 yrs (Intern)</option>
+                  <option value="has_exp">&gt; 0 yrs Exp</option>
+                  <option value="zero_exp">0 yrs Exp</option>
                 </select>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 lg:col-span-2">
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as SortField)}
                     aria-label="Sort candidates by"
                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs font-medium text-slate-800 focus:border-slate-400 focus:bg-white focus:outline-none"
                   >
-                    <option value="score">Sort: Match Score</option>
-                    <option value="relevant_years">Sort: Relevant Yrs</option>
+                    <option value="score">Sort: Score</option>
+                    <option value="relevant_years">Sort: Rel. Yrs</option>
                     <option value="total_years">Sort: Total Yrs</option>
                     <option value="projects">Sort: Projects</option>
-                    <option value="name">Sort: Candidate ID</option>
+                    <option value="name">Sort: ID</option>
                   </select>
                   <button
                     type="button"

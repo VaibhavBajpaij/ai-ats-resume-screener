@@ -39,7 +39,7 @@ describe("extractResumeProfile Gemini 1.5 Flash v1beta integration", () => {
     }
   });
 
-  it("initializes GoogleGenAI with v1beta and calls model 'gemini-1.5-flash-latest'", async () => {
+  it("initializes GoogleGenAI with v1beta and calls primary Gemini Flash model", async () => {
     process.env.GEMINI_API_KEY = "test-api-key";
 
     generateContentMock.mockResolvedValue({
@@ -88,7 +88,7 @@ describe("extractResumeProfile Gemini 1.5 Flash v1beta integration", () => {
     });
     expect(generateContentMock).toHaveBeenCalledTimes(1);
     expect(generateContentMock.mock.calls[0]?.[0]?.model).toBe(
-      "gemini-1.5-flash-latest"
+      "gemini-3.1-flash-lite"
     );
     expect(result.extractionMode).toBe("llm_structured");
     expect(result.diagnostics).toHaveLength(0);

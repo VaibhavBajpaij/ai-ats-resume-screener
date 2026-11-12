@@ -188,6 +188,10 @@ export function CandidateDrawer({
     uploadedObjectUrls[candidate.id] ??
     null;
 
+  const actionableDiagnostics = candidate.diagnostics.filter(
+    (d) => d.severity === "error" || d.severity === "warning"
+  );
+
   return (
     <div
       className="fixed inset-0 z-50 flex justify-end bg-slate-900/45 backdrop-blur-[1px]"
@@ -301,23 +305,21 @@ export function CandidateDrawer({
         {/* Body */}
         <div className="flex-1 space-y-6 overflow-y-auto p-6">
           {/* Diagnostics / Errors Banner */}
-          {candidate.diagnostics.length > 0 && (
+          {actionableDiagnostics.length > 0 && (
             <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-900">
                 <ShieldAlert className="h-4 w-4 text-amber-700" />
-                Pipeline Diagnostics & Extraction Errors (
-                {candidate.diagnostics.length})
+                Pipeline Diagnostics & Extraction Warnings (
+                {actionableDiagnostics.length})
               </div>
               <div className="mt-2 space-y-1.5">
-                {candidate.diagnostics.map((diag, idx) => (
+                {actionableDiagnostics.map((diag, idx) => (
                   <div
                     key={idx}
                     className={`flex items-start gap-2 rounded-lg px-3 py-2 text-xs ${
                       diag.severity === "error"
                         ? "bg-rose-50 text-rose-900 ring-1 ring-rose-200"
-                        : diag.severity === "warning"
-                          ? "bg-amber-100/70 text-amber-950"
-                          : "bg-white/80 text-slate-700"
+                        : "bg-amber-100/70 text-amber-950"
                     }`}
                   >
                     <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />

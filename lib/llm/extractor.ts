@@ -22,8 +22,8 @@ STRICT GROUNDING RULES:
    - "uiux_design" / "uiux": UI/UX design, product design, wireframing, prototyping, Figma, user research, usability testing, design systems, web/app interface design.
    - "software_engineering": General coding/web development without primary UI/UX ownership.
    - "other": All other domains.
-4. DATE INTEGRITY: Preserve exact startDateRaw and endDateRaw strings (e.g. "Jan 2022", "Present") for each role. Only populate *YearsReported if the resume text explicitly states a numeric duration summary; otherwise return null.
-5. AMBIGUITY REPORTING: If dates are missing, text is fragmented/garbled, or sections are unreadable, record clear descriptions in uncertaintyFlags rather than guessing.
+4. DATE INTEGRITY: Current reference date is November 2026; dates in 2025–2026 are normal recent/current dates and must NOT be flagged as future dates. Preserve exact startDateRaw and endDateRaw strings (e.g. "Jan 2022", "Present") for each role. Only populate *YearsReported if the resume text explicitly states a numeric duration summary; otherwise return null.
+5. AMBIGUITY REPORTING: Only if dates are missing, text is fragmented/garbled, or sections are unreadable, record brief descriptions in uncertaintyFlags rather than guessing.
 6. ANONYMITY: Use the provided candidate file ID as candidateLabel; do not fabricate names.`;
 
 export function buildExtractionUserPrompt(
@@ -540,13 +540,43 @@ export interface ExtractionExecutionResult {
   diagnostics: DiagnosticIssue[];
 }
 
+const GEMINI_MODEL_CANDIDATES = [
+  "gemini-3.1-flash-lite",
+  "gemini-3.5-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-flash-latest",
+  "gemini-3.8-flash",
+] as const;
+
+function formatGeminiError(rawMessage: string): string {
+  if (/\b429\b|RESOURCE_EXHAUSTED|quota/i.test(rawMessage)) {
+    return "Gemini API rate/quota limit reached (429)";
+  }
+  if (/\b503\b|UNAVAILABLE|high demand/i.test(rawMessage)) {
+    return "Gemini API temporarily overloaded (503)";
+  }
+  if (/\b404\b|NOT_FOUND/i.test(rawMessage)) {
+    return "Gemini model endpoint not found (404)";
+  }
+  if (/\b(401|403)\b|PERMISSION_DENIED|API_KEY_INVALID/i.test(rawMessage)) {
+    return "Gemini API authentication failed (401/403)";
+  }
+  return rawMessage.replace(/\s+/g, " ").slice(0, 140);
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
- * Extracts structured candidate JSON using Gemini 1.5 Flash (@google/genai) when configured,
+ * Extracts structured candidate JSON using Gemini Flash (@google/genai) when configured,
  * or transparently falls back to deterministic heuristic extraction.
  */
 export async function extractResumeProfile(
   filename: string,
-  parsed: ParsedDocumentResult
+  parsed: ParsedDocumentResult,
+  options?: { modelCandidates?: readonly string[] }
 ): Promise<ExtractionExecutionResult> {
   if (parsed.status === "failed" || !parsed.normalizedText.trim()) {
     return {
@@ -591,50 +621,67 @@ export async function extractResumeProfile(
     };
   }
 
-  try {
-    const ai = new GoogleGenAI({
-      apiKey,
-      httpOptions: { apiVersion: "v1beta" },
-    });
-    const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash-latest",
-      contents: buildExtractionUserPrompt(filename, parsed),
-      config: {
-        systemInstruction: EXTRACTION_SYSTEM_PROMPT,
-        temperature: 0,
-        responseMimeType: "application/json",
-        responseSchema: GEMINI_RESPONSE_SCHEMA,
-      },
-    });
+  const ai = new GoogleGenAI({
+    apiKey,
+    httpOptions: { apiVersion: "v1beta" },
+  });
+  const userPrompt = buildExtractionUserPrompt(filename, parsed);
+  let lastErrorReason = "unknown LLM extraction failure";
 
-    const jsonText = response.text?.trim() ?? "";
-    if (!jsonText) {
-      throw new Error("Empty response from Gemini (gemini-1.5-flash-latest).");
+  const candidates = options?.modelCandidates ?? GEMINI_MODEL_CANDIDATES;
+  for (const modelName of candidates) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents: userPrompt,
+          config: {
+            systemInstruction: EXTRACTION_SYSTEM_PROMPT,
+            temperature: 0,
+            responseMimeType: "application/json",
+            responseSchema: GEMINI_RESPONSE_SCHEMA,
+          },
+        });
+
+        const jsonText = response.text?.trim() ?? "";
+        if (!jsonText) {
+          throw new Error(`Empty response from Gemini (${modelName}).`);
+        }
+
+        const parsedJson = JSON.parse(jsonText);
+        const validated = RawLLMExtractionSchema.parse(parsedJson);
+
+        return {
+          rawExtraction: validated,
+          extractionMode: "llm_structured",
+          diagnostics: [],
+        };
+      } catch (err) {
+        lastErrorReason =
+          err instanceof Error ? err.message : "unknown LLM extraction failure";
+        const isTransient = /\b(429|503|quota|rate|unavailable|overloaded|high demand)\b/i.test(
+          lastErrorReason
+        );
+        if (isTransient && attempt === 1) {
+          await sleep(1500);
+          continue;
+        }
+        break;
+      }
     }
-
-    const parsedJson = JSON.parse(jsonText);
-    const validated = RawLLMExtractionSchema.parse(parsedJson);
-
-    return {
-      rawExtraction: validated,
-      extractionMode: "llm_structured",
-      diagnostics: [],
-    };
-  } catch (err) {
-    const reason =
-      err instanceof Error ? err.message : "unknown LLM extraction failure";
-    return {
-      rawExtraction: heuristicFallbackExtract(filename, parsed),
-      extractionMode: "heuristic_fallback",
-      diagnostics: [
-        {
-          stage: "llm_extraction",
-          severity: "warning",
-          code: "WARN_LLM_FAILED_FALLBACK_TO_HEURISTIC",
-          message: `Gemini structured extraction failed (${reason}); fell back to deterministic heuristic extraction.`,
-        },
-      ],
-    };
   }
+
+  return {
+    rawExtraction: heuristicFallbackExtract(filename, parsed),
+    extractionMode: "heuristic_fallback",
+    diagnostics: [
+      {
+        stage: "llm_extraction",
+        severity: "warning",
+        code: "WARN_LLM_FAILED_FALLBACK_TO_HEURISTIC",
+        message: `${formatGeminiError(lastErrorReason)}; fell back to deterministic heuristic extraction.`,
+      },
+    ],
+  };
 }
 

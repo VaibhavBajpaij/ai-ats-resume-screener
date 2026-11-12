@@ -1,6 +1,6 @@
 # AI ATS Resume Screener & Deterministic Candidate Ranking Engine
 
-[![Next.js 15](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/) [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org/) [![Gemini 1.5 Flash](https://img.shields.io/badge/Google%20Gemini-1.5%20Flash-4285F4?logo=google)](https://ai.google.dev/) [![Zod](https://img.shields.io/badge/Validated%20with-Zod-3E67B1)](https://zod.dev/) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+[![Next.js 15](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/) [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org/) [![Gemini Flash](https://img.shields.io/badge/Google%20Gemini-Flash%20Latest-4285F4?logo=google)](https://ai.google.dev/) [![Zod](https://img.shields.io/badge/Validated%20with-Zod-3E67B1)](https://zod.dev/) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
 An AI-powered **Applicant Tracking System (ATS)**, **Resume Parser**, and **Multi-Role Candidate Ranking Engine** built with **Next.js 15 (App Router)** and **TypeScript**.
 
@@ -54,7 +54,7 @@ Every candidate is evaluated deterministically out of **100 points** against two
 ## Tech Stack
 * **Framework:** Next.js 15 (App Router), React 19, TypeScript
 * **Document Parsing:** `pdf-parse`, `pdfjs-dist`, `mammoth`, `jszip`
-* **AI & Validation:** `@google/genai` (`gemini-1.5-flash-latest` via `v1beta` with deterministic `heuristic_fallback`), `zod`
+* **AI & Validation:** `@google/genai` (`gemini-flash-latest` via `v1beta` with deterministic `heuristic_fallback`), `zod`
 * **Styling & UI:** Tailwind CSS, `lucide-react`
 * **Testing:** Vitest (`16/16` unit & route tests covering parsers, interval math, hallucination stripping, and API guards)
 

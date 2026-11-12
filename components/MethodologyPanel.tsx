@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   AlertTriangle,
   BookOpen,
@@ -24,21 +24,35 @@ export function MethodologyPanel({
   jobProfiles,
   onSelectCandidate,
 }: MethodologyPanelProps) {
+  const [showCleaningAudits, setShowCleaningAudits] = useState(false);
+
+  const failedResumes = candidates.filter((c) => c.parsing.status === "failed");
+  const llmStructuredCount = candidates.filter(
+    (c) => c.parsing.extractionMode === "llm_structured"
+  ).length;
+  const warningResumes = candidates.filter(
+    (c) =>
+      c.parsing.status !== "failed" &&
+      c.diagnostics.some(
+        (d) => d.severity === "error" || d.severity === "warning"
+      )
+  );
+
   const candidatesWithIssues = candidates
-    .filter(
-      (c) =>
+    .filter((c) => {
+      const hasErrorOrWarn =
         c.parsing.status !== "success" ||
         c.diagnostics.some(
           (d) => d.severity === "error" || d.severity === "warning"
-        ) ||
-        c.cleaningAuditLog.length > 0
-    )
+        );
+      return showCleaningAudits
+        ? hasErrorOrWarn || c.cleaningAuditLog.length > 0
+        : hasErrorOrWarn;
+    })
     .sort((a, b) => {
       const rank = { failed: 0, partial: 1, success: 2 } as const;
       return rank[a.parsing.status] - rank[b.parsing.status];
     });
-
-  const failedResumes = candidates.filter((c) => c.parsing.status === "failed");
 
   return (
     <div className="space-y-6">
@@ -51,22 +65,37 @@ export function MethodologyPanel({
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900">
-                Extraction Errors, Warnings & Cleaning Diagnostics
+                Extraction Errors, Warnings &amp; Cleaning Diagnostics
               </h3>
               <p className="text-xs text-slate-500">
-                Transparent audit of failed scrapes, sparse/image-only files,
-                and post-AI data cleaning interventions across{" "}
-                {candidates.length} resumes.
+                Transparent audit of failed scrapes, fallback warnings, and
+                post-AI data cleaning across {candidates.length} resumes.
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs font-semibold">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
             <span className="rounded-full bg-rose-50 px-3 py-1 text-rose-700 ring-1 ring-rose-600/20">
               {failedResumes.length} Failed
             </span>
             <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-800 ring-1 ring-amber-600/20">
-              {candidatesWithIssues.length} Flagged / Audited
+              {warningResumes.length} Warnings
             </span>
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 ring-1 ring-emerald-600/20">
+              {llmStructuredCount} AI Extracted
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowCleaningAudits((prev) => !prev)}
+              className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
+                showCleaningAudits
+                  ? "bg-slate-900 text-white"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
+            >
+              {showCleaningAudits
+                ? "Hide Routine Cleaning Audits"
+                : "Include Routine Cleaning Audits"}
+            </button>
           </div>
         </div>
 
@@ -115,32 +144,35 @@ export function MethodologyPanel({
                   </div>
 
                   <div className="mt-2.5 space-y-1.5">
-                    {c.diagnostics.map((d, i) => (
-                      <div
-                        key={i}
-                        className={`flex items-start gap-2 rounded-lg px-3 py-1.5 text-xs ${
-                          d.severity === "error"
-                            ? "bg-rose-100/70 text-rose-900"
-                            : d.severity === "warning"
-                              ? "bg-amber-100/70 text-amber-950"
-                              : "bg-white text-slate-600"
-                        }`}
-                      >
-                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                        <span>
-                          <strong className="font-mono">[{d.code}]</strong>{" "}
-                          {d.message}
-                        </span>
-                      </div>
-                    ))}
-                    {c.cleaningAuditLog.map((log, i) => (
-                      <div
-                        key={`audit-${i}`}
-                        className="rounded-lg bg-white px-3 py-1.5 font-mono text-[11px] text-slate-700 ring-1 ring-slate-200/70"
-                      >
-                        [CLEANER] {log}
-                      </div>
-                    ))}
+                    {c.diagnostics
+                      .filter(
+                        (d) => d.severity === "error" || d.severity === "warning"
+                      )
+                      .map((d, i) => (
+                        <div
+                          key={i}
+                          className={`flex items-start gap-2 rounded-lg px-3 py-1.5 text-xs ${
+                            d.severity === "error"
+                              ? "bg-rose-100/70 text-rose-900"
+                              : "bg-amber-100/70 text-amber-950"
+                          }`}
+                        >
+                          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                          <span>
+                            <strong className="font-mono">[{d.code}]</strong>{" "}
+                            {d.message}
+                          </span>
+                        </div>
+                      ))}
+                    {showCleaningAudits &&
+                      c.cleaningAuditLog.map((log, i) => (
+                        <div
+                          key={`audit-${i}`}
+                          className="rounded-lg bg-white px-3 py-1.5 font-mono text-[11px] text-slate-700 ring-1 ring-slate-200/70"
+                        >
+                          [CLEANER] {log}
+                        </div>
+                      ))}
                   </div>
                 </div>
               );
@@ -192,7 +224,7 @@ export function MethodologyPanel({
             <li>
               <strong>Structured Extraction:</strong> Validates every extraction
               against strict Zod schemas (<code>RawLLMExtractionSchema</code>{" "}
-              via Gemini 1.5 Flash when configured, or deterministic heuristic
+              via Gemini Flash (<code>gemini-3.5-flash-lite</code>) when configured, or deterministic heuristic
               fallback when offline/unconfigured).
             </li>
             <li>
