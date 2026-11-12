@@ -541,7 +541,7 @@ export interface ExtractionExecutionResult {
 }
 
 /**
- * Extracts structured candidate JSON using Gemini 2.5 Flash (@google/genai) when configured,
+ * Extracts structured candidate JSON using Gemini 1.5 Flash (@google/genai) when configured,
  * or transparently falls back to deterministic heuristic extraction.
  */
 export async function extractResumeProfile(
@@ -594,7 +594,7 @@ export async function extractResumeProfile(
   try {
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
       contents: buildExtractionUserPrompt(filename, parsed),
       config: {
         systemInstruction: EXTRACTION_SYSTEM_PROMPT,
@@ -606,7 +606,7 @@ export async function extractResumeProfile(
 
     const jsonText = response.text?.trim() ?? "";
     if (!jsonText) {
-      throw new Error("Empty response from Gemini 2.5 Flash.");
+      throw new Error("Empty response from Gemini 1.5 Flash.");
     }
 
     const parsedJson = JSON.parse(jsonText);

@@ -192,7 +192,7 @@ export function MethodologyPanel({
             <li>
               <strong>Structured Extraction:</strong> Validates every extraction
               against strict Zod schemas (<code>RawLLMExtractionSchema</code>{" "}
-              via Gemini 2.5 Flash when configured, or deterministic heuristic
+              via Gemini 1.5 Flash when configured, or deterministic heuristic
               fallback when offline/unconfigured).
             </li>
             <li>

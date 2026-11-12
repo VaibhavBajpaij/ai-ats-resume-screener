@@ -25,7 +25,7 @@ export interface ProcessResumeInput {
 /**
  * Shared Tier-1 & Tier-2 resume processing pipeline:
  * 1. Magic-byte route + DOCX/PDF parsing
- * 2. Gemini 2.5 Flash structured extraction (with heuristic fallback)
+ * 2. Gemini 1.5 Flash structured extraction (with heuristic fallback)
  * 3. Deterministic cleaning, taxonomy normalization, evidence verification & date math
  * 4. JD1 & JD2 scoring + 4-category classification + Zod schema validation
  */
